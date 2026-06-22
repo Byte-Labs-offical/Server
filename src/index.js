@@ -3,7 +3,8 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const { init } = require('./database');
+const { init, verification } = require('./database');
+const { VerificationService } = require('./verification/verification-service');
 
 const client = new Client({
   intents: [
@@ -16,6 +17,7 @@ const client = new Client({
 });
 
 client.commands = new Collection();
+client.verification = new VerificationService(verification);
 
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));

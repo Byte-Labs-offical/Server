@@ -5,12 +5,22 @@ module.exports = {
   name: 'interactionCreate',
 
   async execute(interaction) {
-    if (!interaction.isChatInputCommand()) return;
-
-    const command = interaction.client.commands.get(interaction.commandName);
-    if (!command) return;
-
     try {
+      if (interaction.isButton()) {
+        await interaction.client.verification.handleButton(interaction);
+        return;
+      }
+
+      if (interaction.isModalSubmit()) {
+        await interaction.client.verification.handleModal(interaction);
+        return;
+      }
+
+      if (!interaction.isChatInputCommand()) return;
+
+      const command = interaction.client.commands.get(interaction.commandName);
+      if (!command) return;
+
       await command.execute(interaction);
     } catch (error) {
       logError('interactionCreate', error);

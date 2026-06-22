@@ -10,7 +10,8 @@
   "keywords": ["discord", "bot", "byte-labs-server"],
   "license": "MIT",
   "dependencies": {
-    "discord.js": "^14.18.0",
+    "@napi-rs/canvas": "^0.1.70",
+    "discord.js": "^14.26.2",
     "dotenv": "^17.4.2",
     "sql.js": "^1.11.0"
   }

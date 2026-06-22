@@ -8,6 +8,12 @@ module.exports = {
 
     client.user.setActivity('Byte Labs Server', { type: 3 });
 
+    setInterval(() => {
+      client.verification.cleanupExpiredChallenges(client).catch(error => {
+        console.error('[VERIFY] Failed to clean up expired challenges:', error.message);
+      });
+    }, 60_000);
+
     const commands = [...client.commands.values()].map(c => c.data.toJSON());
     const guildId = process.env.GUILD_ID;
 

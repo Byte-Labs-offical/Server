@@ -1,16 +1,17 @@
 # Byte Labs Server Discord Bot
 
-A clean, lightweight, and feature-rich Discord moderation bot built for **Byte Labs**. Powered by `discord.js` v14 with native **slash commands** and a local SQLite database — no external database servers required.
+A clean, lightweight, and feature-rich Discord moderation **and verification** bot built for **Byte Labs**. Powered by `discord.js` v14 with native **slash commands** and a local SQLite database — no external database servers required.
 
 ## Features
 
 - **Native slash command system** — All commands use Discord's built-in `/command` interface with autocomplete, option validation, and permission gating
 - **Auto-registration** — Commands register themselves with Discord on startup; set `GUILD_ID` for instant updates while developing
 - **Full moderation suite** — Kick, ban, timeout, mute, warn, purge, nuke, and more
+- **Captcha verification** — `/verify` onboarding flow with image captchas, a button panel, modal answer input, per-guild settings, stats, and audit logging
 - **Channel management** — Slowmode, lock/unlock, nickname changes
 - **Role management** — Add, remove, or toggle roles with a single command
 - **Information commands** — Server info, user info, avatar, icon, emoji list, member stats
-- **Local database** — SQLite stores user activity and moderation logs
+- **Local database** — SQLite stores user activity, moderation logs, and verification state
 - **Role hierarchy protection** — Cannot moderate users or manage roles above your own rank
 - **Permission gating** — Each command declares its required permission via `setDefaultMemberPermissions`, plus a runtime safety check
 - **Ephemeral errors** — Validation failures reply privately so they don't clutter the channel
@@ -68,6 +69,21 @@ All commands use Discord's native slash command interface. Type `/` in any chann
 |---------|------------|-------------|
 | `/role action:[add\|remove\|toggle] user:[@user] role:[@role]` | Manage Roles | Add, remove, or toggle a role on a member |
 
+### Verification
+
+The `/verify` command groups all verification administration into subcommands (requires **Manage Server**). Members verify themselves through the panel button — no command needed.
+
+| Command | Description |
+|---------|-------------|
+| `/verify setup role:[@role] channel:[#channel] log-channel:[#channel]` | Save the verified role, optional panel channel, and optional log channel |
+| `/verify settings captcha-length:[4-8] timeout-minutes:[1-30] max-attempts:[1-10] enabled:[true\|false]` | Update verification behavior |
+| `/verify panel channel:[#channel]` | Send the verification panel with a **Start Verification** button |
+| `/verify config` | Show the current verification configuration and stats |
+| `/verify stats member:[@user]` | Show guild verification totals, or a single member's state |
+| `/verify reset member:[@user] remove-role:[true\|false]` | Clear a member's active challenge and optionally remove the verified role |
+
+When a member presses **Start Verification**, the bot DMs an ephemeral image captcha with **Enter Captcha** and **Refresh Captcha** buttons. Correct answers grant the verified role; challenges expire automatically after the configured timeout. The bot needs the **Manage Roles** permission and its own role must sit above the verified role.
+
 ---
 
 ## Project Structure
@@ -76,7 +92,7 @@ All commands use Discord's native slash command interface. Type `/` in any chann
 server/
 ├── src/
 │   ├── index.js              # Entry point — loads commands, events, and starts the bot
-│   ├── database.js           # SQLite database — users and moderation logs
+│   ├── database.js           # SQLite database — users, moderation logs, and verification state
 │   ├── utils.js              # Helpers — embed builder, error logging, support link
 │   ├── commands/             # All slash commands (one SlashCommandBuilder per file)
 │   │   ├── avatar.js
@@ -101,11 +117,18 @@ server/
 │   │   ├── unlock.js
 │   │   ├── unmute.js
 │   │   ├── userinfo.js
+│   │   ├── verify.js
 │   │   ├── warn.js
 │   │   └── warnings.js
+│   ├── verification/             # Verification feature modules
+│   │   ├── constants.js          # Default settings, custom IDs, audit limit
+│   │   ├── captcha-service.js    # Captcha image generation (@napi-rs/canvas)
+│   │   ├── verification-service.js  # Panel, captcha flow, button/modal handling
+│   │   ├── custom-id.js          # User-scoped custom ID helpers
+│   │   └── messages.js           # Component v2 payloads (panel, config, stats, etc.)
 │   └── events/
-│       ├── ready.js              # Ready event — sets presence and registers slash commands
-│       ├── interactionCreate.js  # Slash command handler
+│       ├── ready.js              # Ready event — presence, command registration, challenge cleanup
+│       ├── interactionCreate.js  # Slash command, button, and modal handler
 │       └── messageCreate.js      # Lightweight user-activity tracker
 ├── .github/
 │   ├── dependabot.yml            # Automated dependency updates
@@ -129,7 +152,7 @@ Each file in `src/commands/` exports a `data` object (a `SlashCommandBuilder`) a
 2. The `ready` event collects all command definitions and registers them with Discord:
    - If `GUILD_ID` is set in `.env`, commands register to that single guild and appear **instantly** — ideal for development.
    - If `GUILD_ID` is left blank, commands register **globally** and may take up to ~1 hour to propagate across all servers.
-3. When a user runs a command, the `interactionCreate` event looks it up and calls its `execute` handler.
+3. When a user runs a command, the `interactionCreate` event looks it up and calls its `execute` handler. The same event also routes verification **button** and **modal** interactions to the verification service.
 
 There is no separate deploy step — registration happens automatically every time the bot starts.
 
@@ -160,13 +183,54 @@ The bot uses a local SQLite database (`data.db`).
 
 > A `guilds` table also exists for forward-compatible per-guild settings; it is not required by the slash command flow.
 
+### `verify_guilds`
+Per-guild verification settings and rolling stats.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| guild_id | TEXT PRIMARY KEY | Guild ID |
+| enabled | INTEGER DEFAULT 1 | Whether verification is enabled |
+| verified_role_id | TEXT | Role granted after verification |
+| panel_channel_id | TEXT | Last channel a panel was sent to |
+| log_channel_id | TEXT | Optional verification log channel |
+| captcha_length | INTEGER DEFAULT 6 | Captcha character count (4–8) |
+| timeout_minutes | INTEGER DEFAULT 5 | Challenge lifetime (1–30) |
+| max_attempts | INTEGER DEFAULT 3 | Allowed attempts per challenge (1–10) |
+| started / verified / failed / expired / resets / panels_sent | INTEGER | Rolling counters |
+| created_at / updated_at | DATETIME | Record timestamps |
+
+### `verify_challenges`
+Active captcha challenges, keyed by guild + user.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| guild_id | TEXT | Guild ID (part of primary key) |
+| user_id | TEXT | User ID (part of primary key) |
+| answer | TEXT | Expected captcha answer |
+| expires_at | TEXT | ISO timestamp when the challenge expires |
+| attempt_count | INTEGER DEFAULT 0 | Failed attempts so far |
+| created_at | TEXT | When the challenge was issued |
+
+### `verify_audit`
+Recent verification events (capped at the newest 200 rows).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER PRIMARY KEY | Auto-incrementing entry ID |
+| guild_id | TEXT | Guild where the event occurred |
+| action | TEXT | Event type (setup_saved, panel_sent, verification_completed, etc.) |
+| actor_id | TEXT | User who triggered the event |
+| target_id | TEXT | Affected user or role |
+| metadata | TEXT | Optional JSON details |
+| timestamp | TEXT | ISO timestamp |
+
 ---
 
 ## Setup
 
 ### Prerequisites
 
-- **Node.js** 18 or higher
+- **Node.js** 20.11 or higher
 - **Discord Bot Token** — [Create one in the Discord Developer Portal](https://discord.com/developers/applications)
 
 ### Installation
