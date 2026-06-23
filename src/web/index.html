@@ -1,1 +1,49 @@
-<!DOCTYPE html><html><head><title>Bot Dashboard</title><link rel="stylesheet" href="/css/style.css"></head><body><h1>Bot Dashboard</h1><div id="stats"></div><a href="/privacy">Privacy Policy</a> | <a href="/terms">Terms & Conditions</a><script src="/js/app.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Byte Labs Server</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <div>
+        <p class="eyebrow">Byte Labs</p>
+        <h1>Discord Server Manager</h1>
+        <p class="hero-copy">A fast moderation and verification bot with a web dashboard login powered by Discord OAuth.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="button button-primary" href="/login">Login with Discord</a>
+        <a class="button button-secondary" href="/privacy">Privacy</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="card card-grid">
+        <div>
+          <h2>Dashboard Access</h2>
+          <p>Login to manage servers where you have ownership or Manage Server permissions.</p>
+          <div id="auth"></div>
+        </div>
+        <div>
+          <h2>Bot Health</h2>
+          <div id="stats"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>What This Bot Provides</h2>
+        <ul class="features-list">
+          <li>Slash command moderation: kick, ban, mute, timeout, warn, purge</li>
+          <li>Server verification flows with captchas and role automation</li>
+          <li>Fast dashboard login using Discord OAuth</li>
+          <li>Live bot and guild status from the web interface</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+  <script src="/js/app.js"></script>
+</body>
+</html>

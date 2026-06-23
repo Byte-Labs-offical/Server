@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discord Activity | Byte Labs Server</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <div>
+        <p class="eyebrow">Discord Activity</p>
+        <h1>Your Discord Activity</h1>
+        <p class="hero-copy">View your Discord session details and manage servers where the bot is installed and you have permission.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="button button-secondary" href="/">Home</a>
+        <a class="button button-secondary" href="/dashboard">Dashboard</a>
+        <a class="button button-primary" href="/logout">Logout</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Your Discord Profile</h2>
+        <div id="activity-user" class="dashboard-panel">Loading profile…</div>
+      </section>
+
+      <section class="card">
+        <h2>Manageable Servers</h2>
+        <div id="activity-guilds" class="dashboard-panel">Loading servers…</div>
+      </section>
+
+      <section class="card">
+        <h2>Server Actions</h2>
+        <p>Click a server below to open its settings or invite the bot.</p>
+        <div id="activity-actions" class="dashboard-panel">Loading actions…</div>
+      </section>
+    </main>
+  </div>
+  <script src="/js/activity.js"></script>
+</body>
+</html>

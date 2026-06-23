@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Byte Labs Server</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <div>
+        <p class="eyebrow">Dashboard</p>
+        <h1>Manage Your Servers</h1>
+        <p class="hero-copy">Review the guilds you can manage and access the bot in servers where it is present.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="button button-secondary" href="/">Home</a>
+        <a class="button button-secondary" href="/activity">Discord Activity</a>
+        <a class="button button-primary" href="/logout">Logout</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Your Account</h2>
+        <div id="dashboard-user" class="dashboard-panel">Loading account details…</div>
+      </section>
+
+      <section class="card">
+        <h2>Manageable Servers</h2>
+        <div id="guild-list" class="dashboard-panel">Loading servers…</div>
+      </section>
+
+      <section class="card">
+        <h2>Bot Status</h2>
+        <div id="dashboard-status" class="dashboard-panel">Loading bot status…</div>
+      </section>
+    </main>
+  </div>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

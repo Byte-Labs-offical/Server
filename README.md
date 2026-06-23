@@ -247,14 +247,21 @@ npm install
 cp .env.example .env
 ```
 
-Edit `.env` and add your bot token:
+Edit `.env` and add your bot token plus the dashboard auth settings:
 
 ```
 DISCORD_TOKEN=your_bot_token_here
 GUILD_ID=
+PORT=3000
+SESSION_SECRET=your_session_secret_here
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+DISCORD_CALLBACK_URL=http://localhost:3000/auth/discord/callback
 ```
 
 Set `GUILD_ID` to your test server's ID for instant slash command registration, or leave it blank to register globally.
+
+To configure Discord OAuth2, open your application on the Discord Developer Portal and add a Redirect URI matching your callback URL above.
 
 ### Running
 
