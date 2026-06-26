@@ -10,6 +10,9 @@ A clean, lightweight, and feature-rich Discord moderation **and verification** b
 - **Captcha verification** — `/verify` onboarding flow with image captchas, a button panel, modal answer input, per-guild settings, stats, and audit logging
 - **Channel management** — Slowmode, lock/unlock, nickname changes
 - **Role management** — Add, remove, or toggle roles with a single command
+- **Reaction roles** — Assign roles automatically when users react to configured messages
+- **Modmail support** — Users DM the bot and staff handle tickets in thread channels
+- **Setup wizard** — Configure modmail using `/setup modmail`
 - **Information commands** — Server info, user info, avatar, icon, emoji list, member stats
 - **Local database** — SQLite stores user activity, moderation logs, and verification state
 - **Role hierarchy protection** — Cannot moderate users or manage roles above your own rank
@@ -69,6 +72,22 @@ All commands use Discord's native slash command interface. Type `/` in any chann
 |---------|------------|-------------|
 | `/role action:[add\|remove\|toggle] user:[@user] role:[@role]` | Manage Roles | Add, remove, or toggle a role on a member |
 
+### Reaction Roles
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/reactionrole add channel:[#channel] message-id:[id] emoji:[emoji] role:[@role]` | Manage Roles | Add a reaction role mapping to a message |
+| `/reactionrole remove channel:[#channel] message-id:[id] emoji:[emoji]` | Manage Roles | Remove a reaction role mapping |
+| `/reactionrole list channel:[#channel]? message-id:[id]?` | Manage Roles | List configured reaction role mappings |
+
+### Modmail
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/setup modmail support-channel:[#channel] log-channel:[#channel]? category:[#category]?` | Manage Server | Configure modmail support channels |
+| `/modmail status` | Manage Server | Show current modmail configuration |
+| `/modmail close` | Manage Server | Close the current open modmail thread |
+
 ### Verification
 
 The `/verify` command groups all verification administration into subcommands (requires **Manage Server**). Members verify themselves through the panel button — no command needed.
@@ -103,14 +122,17 @@ server/
 │   │   ├── kick.js
 │   │   ├── lock.js
 │   │   ├── membercount.js
+│   │   ├── modmail.js
 │   │   ├── mute.js
 │   │   ├── nick.js
 │   │   ├── nuke.js
 │   │   ├── ping.js
 │   │   ├── purge.js
+│   │   ├── reactionrole.js
 │   │   ├── role.js
 │   │   ├── servericon.js
 │   │   ├── serverinfo.js
+│   │   ├── setup.js
 │   │   ├── slowmode.js
 │   │   ├── timeout.js
 │   │   ├── unban.js
@@ -127,9 +149,11 @@ server/
 │   │   ├── custom-id.js          # User-scoped custom ID helpers
 │   │   └── messages.js           # Component v2 payloads (panel, config, stats, etc.)
 │   └── events/
-│       ├── ready.js              # Ready event — presence, command registration, challenge cleanup
 │       ├── interactionCreate.js  # Slash command, button, and modal handler
-│       └── messageCreate.js      # Lightweight user-activity tracker
+│       ├── messageCreate.js      # DM routing, modmail thread replies, and activity tracking
+│       ├── messageReactionAdd.js # Reaction role assignment
+│       ├── messageReactionRemove.js # Reaction role removal
+│       └── ready.js              # Ready event — presence, command registration, challenge cleanup
 ├── .github/
 │   ├── dependabot.yml            # Automated dependency updates
 │   └── PULL_REQUEST_TEMPLATE.md
