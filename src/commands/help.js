@@ -28,6 +28,8 @@ module.exports = {
         `${commands.join('\n')}`,
         '',
         'Backup and restore tools are available for administrators with `/backup` and `/load-backup`.',
+        'Emoji management tools are also available with `/emojiadd`, `/listemojis`, `/emojienlarge`, `/emojisteal`, `/stickeradd`, and `/liststickers`.',
+        'Fun economy-style slash commands are also available with `/balance`, `/daily`, `/work`, `/beg`, `/profile`, `/top`, and `/my`.',
         '',
         '[Join Support Server](https://discord.gg/wZuTsF5Z2P)'
       ].join('\n')

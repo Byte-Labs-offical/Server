@@ -14,8 +14,9 @@ A clean, lightweight, and feature-rich Discord moderation **and verification** b
 - **Modmail support** — Users DM the bot and staff handle tickets in thread channels
 - **Setup wizard** — Configure modmail using `/setup modmail`
 - **Backup and restore** — Administrators can snapshot a server with `/backup` and restore it with `/load-backup`
+- **OWO-style compatibility commands** — Lightweight slash commands such as `/balance`, `/daily`, `/work`, `/beg`, `/profile`, `/top`, and `/my` are now included for fun economy-style interaction
 - **Information commands** — Server info, user info, avatar, icon, emoji list, member stats
-- **Local database** — SQLite stores user activity, moderation logs, and verification state
+- **Local database** — SQLite stores user activity, moderation logs, verification state, and simple OWO-style profiles
 - **Role hierarchy protection** — Cannot moderate users or manage roles above your own rank
 - **Permission gating** — Each command declares its required permission via `setDefaultMemberPermissions`, plus a runtime safety check
 - **Ephemeral errors** — Validation failures reply privately so they don't clutter the channel
