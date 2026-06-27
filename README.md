@@ -13,8 +13,10 @@ A clean, lightweight, and feature-rich Discord moderation **and verification** b
 - **Reaction roles** — Assign roles automatically when users react to configured messages
 - **Modmail support** — Users DM the bot and staff handle tickets in thread channels
 - **Setup wizard** — Configure modmail using `/setup modmail`
+- **Backup and restore** — Administrators can snapshot a server with `/backup` and restore it with `/load-backup`
+- **OWO-style compatibility commands** — Lightweight slash commands such as `/balance`, `/daily`, `/work`, `/beg`, `/profile`, `/top`, and `/my` are now included for fun economy-style interaction
 - **Information commands** — Server info, user info, avatar, icon, emoji list, member stats
-- **Local database** — SQLite stores user activity, moderation logs, and verification state
+- **Local database** — SQLite stores user activity, moderation logs, verification state, and simple OWO-style profiles
 - **Role hierarchy protection** — Cannot moderate users or manage roles above your own rank
 - **Permission gating** — Each command declares its required permission via `setDefaultMemberPermissions`, plus a runtime safety check
 - **Ephemeral errors** — Validation failures reply privately so they don't clutter the channel
@@ -87,6 +89,13 @@ All commands use Discord's native slash command interface. Type `/` in any chann
 | `/setup modmail support-channel:[#channel] log-channel:[#channel]? category:[#category]?` | Manage Server | Configure modmail support channels |
 | `/modmail status` | Manage Server | Show current modmail configuration |
 | `/modmail close` | Manage Server | Close the current open modmail thread |
+
+### Backup & Restore
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/backup` | Administrator | Create a JSON backup snapshot of roles, channels, emojis, and stickers |
+| `/load-backup backup-id:[id]` | Administrator | Restore a previously created backup into the current server |
 
 ### Verification
 
@@ -249,6 +258,12 @@ Recent verification events (capped at the newest 200 rows).
 | timestamp | TEXT | ISO timestamp |
 
 ---
+
+## Privacy and Terms
+
+The web pages at `/privacy` and `/terms` now explain the bot’s data handling and acceptable use in more detail.
+
+The PeerBox file-transfer site is available at `/peerbox` when the static export is built.
 
 ## Setup
 

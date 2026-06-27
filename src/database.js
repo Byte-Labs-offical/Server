@@ -127,6 +127,29 @@ async function init() {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS backups (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      backup_id TEXT NOT NULL UNIQUE,
+      guild_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS owo_profiles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL UNIQUE,
+      username TEXT NOT NULL,
+      balance INTEGER DEFAULT 0,
+      level INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   save();
   return db;
 }
@@ -615,6 +638,147 @@ const reactionRoles = {
   }
 };
 
+function mapBackup(row) {
+  if (!row) {
+    return null;
+  }
+
+  let payload = row.payload;
+  if (typeof payload === 'string') {
+    try {
+      payload = JSON.parse(payload);
+    } catch {
+      payload = row.payload;
+    }
+  }
+
+  return {
+    id: row.id,
+    backupId: row.backup_id,
+    guildId: row.guild_id,
+    name: row.name,
+    payload,
+    createdAt: row.created_at
+  };
+}
+
+const backups = {
+  create(data) {
+    db.run(
+      'INSERT INTO backups (backup_id, guild_id, name, payload) VALUES (?, ?, ?, ?)',
+      [data.backupId, data.guildId, data.name, JSON.stringify(data.payload || data)]
+    );
+    save();
+
+    const stmt = db.prepare('SELECT * FROM backups WHERE backup_id = ?');
+    stmt.bind([data.backupId]);
+    let row;
+    if (stmt.step()) {
+      row = stmt.getAsObject();
+    }
+    stmt.free();
+    return mapBackup(row);
+  },
+
+  getById(backupId) {
+    const stmt = db.prepare('SELECT * FROM backups WHERE backup_id = ?');
+    stmt.bind([backupId]);
+    let row;
+    if (stmt.step()) {
+      row = stmt.getAsObject();
+    }
+    stmt.free();
+    return mapBackup(row);
+  },
+
+  listByGuild(guildId) {
+    const stmt = db.prepare('SELECT * FROM backups WHERE guild_id = ? ORDER BY created_at DESC');
+    stmt.bind([guildId]);
+    const results = [];
+    while (stmt.step()) {
+      results.push(mapBackup(stmt.getAsObject()));
+    }
+    stmt.free();
+    return results;
+  },
+
+  remove(backupId) {
+    db.run('DELETE FROM backups WHERE backup_id = ?', [backupId]);
+    save();
+  }
+};
+
+const owoProfiles = {
+  get(userId) {
+    const stmt = db.prepare('SELECT * FROM owo_profiles WHERE user_id = ?');
+    stmt.bind([userId]);
+    let row;
+    if (stmt.step()) {
+      row = stmt.getAsObject();
+    }
+    stmt.free();
+    return row;
+  },
+
+  create(data) {
+    db.run(
+      'INSERT INTO owo_profiles (user_id, username, balance, level) VALUES (?, ?, ?, ?)',
+      [data.userId, data.username || 'Unknown', data.balance || 0, data.level || 1]
+    );
+    save();
+    return owoProfiles.get(data.userId);
+  },
+
+  update(userId, patch) {
+    const existing = owoProfiles.get(userId);
+    if (!existing) {
+      return owoProfiles.create({ userId, username: patch.username || 'Unknown' });
+    }
+
+    const assignments = [];
+    const values = [];
+
+    if (patch.username !== undefined) {
+      assignments.push('username = ?');
+      values.push(patch.username);
+    }
+    if (patch.balance !== undefined) {
+      assignments.push('balance = ?');
+      values.push(patch.balance);
+    }
+    if (patch.level !== undefined) {
+      assignments.push('level = ?');
+      values.push(patch.level);
+    }
+
+    assignments.push('updated_at = CURRENT_TIMESTAMP');
+    values.push(userId);
+
+    db.run(`UPDATE owo_profiles SET ${assignments.join(', ')} WHERE user_id = ?`, values);
+    save();
+    return owoProfiles.get(userId);
+  },
+
+  getOrCreate(userId, username) {
+    const existing = owoProfiles.get(userId);
+    if (existing) {
+      return existing;
+    }
+    return owoProfiles.create({ userId, username });
+  },
+
+  listTop(limit = 10) {
+    const stmt = db.prepare('SELECT * FROM owo_profiles ORDER BY balance DESC, level DESC LIMIT ?');
+    stmt.bind([limit]);
+    const results = [];
+    while (stmt.step()) {
+      results.push(stmt.getAsObject());
+    }
+    stmt.free();
+    return results;
+  }
+};
+
 const modmail = {
   getGuild(guildId) {
     const stmt = db.prepare('SELECT * FROM modmail_guilds WHERE guild_id = ?');
@@ -719,4 +883,4 @@ const modmail = {
   }
 };
 
-module.exports = { init, guilds, users, modLogs, verification, reactionRoles, modmail };
+module.exports = { init, guilds, users, modLogs, verification, reactionRoles, modmail, backups, owoProfiles };
